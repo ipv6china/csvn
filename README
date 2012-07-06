@@ -1,0 +1,79 @@
+csvn（暂且先叫这个名字吧),是一个用php,redis,graphviz写的一个subversion配置文件生成工具，用来管理 人，组，项目，权限，来代替手工编辑authz文件的烦恼。
+
+csvn不是最好用的svn管理系统，也没有那么多花俏的功能，只是管理上面那几个对象或策略，来解除一部分的手工工作，我会慢慢改进它，加进一些实用的小功能，但尽量保持它的简单。
+
+这个小程序也是我第一个略有点规模的程序，我不是语言的好手，也不熟悉任何前端体验需要的技术，如js和css等。甚至说我对编程，也属于没入门那级别的，这个算是一个练习的作品，只不过是已经被使用到了实际的环境中，让机器完成一部分事情总比全手工要好用，即使代码是丑的。
+
+下面列举一下csvn的主要功能和特点:
+1.不需要mysql，但需要redis，没错，只用了redis存储数据。
+2.为用户，组，项目（目录）增加注释信息，防止不知道某个英文的id或组名不知道是做什么的，我这里刚超过100个账户，但我接手前也混乱不堪了。
+3.使用graphviz为 人，组，项目生成图形，来描述这个对象与其他两个对象的关系。
+4.我把从系统中build出subversion配置的过程叫“发布配置”，发布的时候会做一个备份，当然你平时也可以随意生成新的备份，这些都在“数据管理”的导航下面。
+5.数据管理用来维护你所做的多个备份，你可以切换到任意一个备份，切换后会清空数据库，并装载那个版本的数据，所以说不要和其他程序公用一个redis数据库
+
+生成配置文件格式
+[cctv:/bbs.cctv.com]
+@p_cctv = rw
+@g_leader = r
+xiaojianbin = rw
+zhangsan = r
+* = 
+也就是说是按具体的节点授权的，授权的顺序是: 组写->组读->用户写->用户读->其他人无权限。
+
+
+每个对象的的图形解读:
+1.人
+  人的图展示了参与了什么组，和什么项目，还有对各个项目的权限
+2.组
+ 组的图展示了组内有多少人，组内的人还参与了什么组，此组参与了什么项目
+3.项目
+ 项目的图展示了对此项目有权限的人和组，从一个人的线追下去，可以发现他获得的是项目的什么权限。 越粗的线条，表示那是实际的权限。
+4.全局视图
+  这个展示了所有的对象之间的关系，这通常是一堆意大利面，除非你的项目足够少，或授权和组做的足够漂亮。
+
+
+===================================================================
+环境的安装
+  使用apache+mod_php+php-redis 同时你需要有个redis server,安装这个的过程暂略。
+
+  graphviz的安装可以参见我们的一个画图的小工具的项目首页：https://code.google.com/p/wephi/
+
+
+csvn的安装，新建立一个虚拟主机，并把csvn放到根目录，然后把文件copy进去，给data和tmp目录设置777权限，同时把subversion的conf目录mount到release下面，本地或远程文件系统都可以。其他的文件和目录并不需要给权限，保留web用户和php进程可读就行。
+
+apache的配置文件一般是这样的：
+<VirtualHost *:80>
+    ServerAdmin ipv6china@comsenz.com
+    DocumentRoot "/www/svnmgr"
+    ServerName svnmgr.comsenz.com
+    ErrorLog "/var/log/svnmgr.comsenz.com.error_log"
+    CustomLog "/var/log/svnmgr.comsenz.com.access_log" common
+<Directory /www/svnmgr>
+	Order Deny,Allow
+	Deny From All
+	Allow From 10.0.6.13
+	php_admin_value open_basedir /www/svnmgr/:/tmp/
+</Directory>
+<Directory /www/svnmgr/data>
+	Order Deny,Allow
+	Deny From All
+</Directory>
+
+</VirtualHost>
+
+
+数据转换
+ install目录有个转换原来的subversion配置文件到csvn用的格式，你可以这样做
+1.把subversion的配置文件httpasswd和authz都copy到install目录下
+2. 执行转换
+   cd install
+   php dbconv.php -pass httpasswd >>../backup/firstinstall.db
+   php dbconv.php -auth authz >>../backup/firstinstall.db
+3. 设置config.inc.php
+   设置好redis的连接信息，端口,ip，密码，数据库, 设置你要使用的超级用户的用户名
+4. 设置超级用户登陆密码
+   php resetSuperPw.php yournewpass
+
+5. 登陆，到数据管理导航下，可以看到firstinstall.db，点切换到此版本，即导入到csvn系统中了。
+
+

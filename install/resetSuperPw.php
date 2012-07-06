@@ -19,7 +19,7 @@ if(!$ret)die('Can\'t connect redis server,die!');
 $redis->auth($redisPass);
 $redis->select($redisDbName);
 
-if(!$redis->exists('user:'.$superAdmin.':info')) die("没有此用户[no user $superAdmin !]");
+//if(!$redis->exists('user:'.$superAdmin.':info')) die("没有此用户[no user $superAdmin !]");
 $redis->hSet('user:'.$superAdmin.':info', 'authpw',myCrypt($argv[1]));
 echo "Password changed!\n";
 
