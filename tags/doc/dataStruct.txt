@@ -1,0 +1,19 @@
+Fav:$fav:info:
+	{sitename =>	网站名称,
+	url => 网站地址,
+	tags => string
+	}
+
+md5:index ->
+{
+	md5(string)=>string
+}
+
+Fav:all: {所有网站地址}
+
+tag:all
+tag:$tag -> {urlmd5}
+
+Fav:last 最近更改的
+
+sys.log 操作日志

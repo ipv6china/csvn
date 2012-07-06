@@ -1,0 +1,115 @@
+SVN管理系统数据结构：
+
+###############
+用户相关
+$user	用户名 string
+
+user:$user:info  用户信息 hashs
+    ->{username=>汉字姓名,
+			password => SVN登陆密码(htpassword格式),
+			department => 此人所在部门,
+			contact	=> 此人联系方式 }
+
+user:$user:owngrp 拥有组集合	set
+
+user:$user:ownproj	拥有项目集合	set{$projectpath[1-n],...}
+
+user:$user:ingroup	参与组集合	set
+
+user:$user:inproj	参与项目集合	set
+								
+user:all	所有用户集合	set
+	操作	scard 得出人数
+			smembers 得出所有人
+			
+
+user:last	最新用户列表	list
+	操作 lpush 增加新注册用户
+		 rpop  保持队列长度为设置的大小
+		 lrange 0 -1 ,取出队列内容
+
+###############
+组相关
+$group	组名	string
+
+group:$group:info	组信息 hashs
+	->{groupname	=>	组描述，
+		department	=>	建立此组的部门,
+		contact		=>	联系人}
+
+group:$group:members => 组成员 set
+
+
+group:$group:owner	组管理员集合	set
+
+group:$group:inproj	参与项目集合	set
+
+group:all	所有组集合 set
+
+group:last	最新建立的组 list
+
+
+###############
+项目相关
+$project=md5($projectpath)	项目id	string
+
+project:$project:info	项目描述信息	hashs
+	->{projectname	=>	项目名称描述,
+			projectpath	=> 项目路径,
+			department	=> 项目所属部门,
+			contact	=>	联系方式,
+			defaultpolicy =>	默认策略(处理* =的情况)[open/close]}
+
+project:$project:owner	所有者集合	set
+
+project:all	所有项目集合(projectpath[1-n])	set
+
+project:last	最新建立的项目	list
+
+md5index	项目路径与md5对应关系	hashs ->{ $project => $projectpath }
+
+project:$project:ro	项目读权限集合	set
+project:$project:rw	项目读写权限集合	set
+
+
+#####################################
+设置相关
+sys:settings 系统设置 hashs
+	->{super => 超级管理员id，
+			projectdefaultpolicy	=> 创建项目时缺省策略,
+	  }
+
+#####################################
+添加用户
+添加到 user:all user:last
+
+删除用户
+删除 user:$user:info ,
+弹出user:all集合,
+遍历user:$user:owngrp，去掉管理
+遍历user:$user:ownproj，去掉管理
+遍历user:$user:inproj的项目，从ro和rw里弹出user,
+遍历user:$user:ingroup的组，user,
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+添加组
+添加到 group:all group:last
+
+删除组
+删除 group:$group:info
+弹出 group:all 集合
+遍历 group:$group:owner 弹出组成员的 user:$user:owngrp的组名,删除本key
+遍历 group:$group:inproj的项目，从ro和ro里弹出group
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+添加项目
+添加到 project:all project:last
+
+删除项目
+删除 project:$project:info
+弹出 project:all
+遍历 project:$project:owner 弹出成员的 user:$user:ownproj的项目名,删除本key
+遍历 project:$project:ro/rw 弹出成员的 user:$user:inproj和group:$group:inproj 移除ro/rw key
+
+
+		
