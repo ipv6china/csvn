@@ -1,5 +1,4 @@
 <?php
-//Flydragon<ipv6china@comsenz.com
 if(!$standalone){
 		include_once("../view/header.php");
 		include_once("../common.php");
@@ -31,7 +30,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'){
 		//最新组列表
 		$redis->lPush('group:last',$group);
 		
-		$redis->sAdd('user:'.$owner.':owngrp',$owner);
+		$redis->sAdd('user:'.$owner.':owngrp',$group);
 
 		//############################### 更新组成员
 		//利用数组的差集取出需要添加和删除的成员,这块因为没有事务支持，可能会有些问题

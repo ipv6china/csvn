@@ -30,9 +30,20 @@ if($authUser == $superAdmin){
 </tr>
 EOT;
 }
+$ownGrps=implode('<br>',$redis->sMembers('user:'.$user.':owngrp'));
+$ownProjs=implode('<br>',$redis->sMembers('user:'.$user.':ownproj'));
 print <<<EOT
 </table>
 <input type="submit" >
 </form>
-
+<table border=1>
+<tr>
+	<td> 拥有组 </td>
+	<td>$ownGrps</td>
+</tr>
+<tr>
+	<td> 拥有项目 </td>
+	<td> $ownProjs</td>
+</tr>
+</table>
 EOT;
